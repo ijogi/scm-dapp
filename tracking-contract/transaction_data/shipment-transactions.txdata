@@ -1,0 +1,112 @@
+[
+    {
+        "transactionName": "entityExists",
+        "transactionLabel": "A test entityExists transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "createShipmentUnit",
+        "transactionLabel": "A test createShipmentUnit transaction",
+        "arguments": [
+            "001",
+            "some content type",
+            "some package type",
+            "some transport mode",
+            "some entity type"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "createTrackableEntity",
+        "transactionLabel": "A test createTrackableEntity transaction",
+        "arguments": [
+            "TE001",
+            "some name",
+            "some content type",
+            "['001', '002']"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerPickup",
+        "transactionLabel": "A test registerPickup transaction",
+        "arguments": [
+            "EV001",
+            "TE001",
+            "2021-03-14",
+            "[{ 'a': 'b' }]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerInboundTransit",
+        "transactionLabel": "A test registerInboundTransit transaction",
+        "arguments": [
+            "EV001",
+            "TE001",
+            "2021-03-14",
+            "[{ 'a': 'b' }]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerArrivalToProcessingCenter",
+        "transactionLabel": "A test registerArrivalToProcessingCenter transaction",
+        "arguments": [
+            "EV001",
+            "TE001",
+            "2021-03-14",
+            "[{ 'a': 'b' }]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerOutboundTransit",
+        "transactionLabel": "A test registerOutboundTransit transaction",
+        "arguments": [
+            "EV001",
+            "TE001",
+            "2021-03-14",
+            "[{ 'a': 'b' }]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerDelivery",
+        "transactionLabel": "A test registerDelivery transaction",
+        "arguments": [
+            "EV001",
+            "TE001",
+            "2021-03-14",
+            "[{ 'a': 'b' }]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "readTransaction",
+        "transactionLabel": "A test readTransaction transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "getTrackableEventHistory",
+        "transactionLabel": "A test getTrackableEventHistory transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "getAllEntityEvents",
+        "transactionLabel": "A test getAllEntityEvents transaction",
+        "arguments": [
+            "001"
+        ],
+        "transientData": {}
+    }
+]
