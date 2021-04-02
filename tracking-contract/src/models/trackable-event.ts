@@ -1,4 +1,3 @@
-import { Participant } from './event-participant';
 /*
  * SPDX-License-Identifier: Apache-2.0
  */

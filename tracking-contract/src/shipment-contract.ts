@@ -3,76 +3,13 @@
  */
 
 import { Context, Contract, Info, Returns, Transaction } from 'fabric-contract-api';
-import { Iterators } from 'fabric-shim-api';
 import { EVENT } from './models/events';
 import { ShippingUnit } from './models/shipment';
-import { SHIPMENT_STATUS } from './models/shipment-status';
 import { TrackableEntity } from './models/trackable-entity';
-import { TrackableEvent } from './models/trackable-event';
-
-type Iterator = (Promise<Iterators.StateQueryIterator> & AsyncIterable<Iterators.KV>) | (Promise<Iterators.HistoryQueryIterator> & AsyncIterable<Iterators.KeyModification>);
+import { exists, iterateOverResults } from './utils/utility-functions';
 
 @Info({title: 'ShipmentContract', description: 'Shipment tracking smart contract' })
 export class ShipmentContract extends Contract {
-
-    private async iterateOverResults(iterator: Iterator) {
-        const allResults = [];
-        for await (const res of iterator) {
-            try {
-                allResults.push(allResults.push(res.value.toString()));
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        return allResults;
-    }
-
-    private async createTrackableEvent(
-        ctx: Context,
-        id: string,
-        name: string,
-        trackableEntityID: string,
-        performedTime: string,
-        participants: string,
-    ): Promise<void> {
-        const exists = await this.entityExists(ctx, trackableEntityID);
-        if (!exists) {
-            throw new Error(`The trackable entity ${trackableEntityID} does not exist`);
-        }
-
-        const trackableEvent = new TrackableEvent({
-            ID: id,
-            name,
-            trackableEntityID,
-            performedTime,
-            participants,
-        });
-
-        const buffer: Buffer = Buffer.from(JSON.stringify(trackableEvent));
-        await ctx.stub.putState(id, buffer);
-    }
-
-    private exists = (data: Uint8Array) => (!!data && data.length > 0);
-
-    private async verifyPreviousEventState(ctx: Context, id: string, event: string, acceptedStates: string[]) {
-        const data = await ctx.stub.getState(id);
-        if (!this.exists(data)) {
-            throw new Error(`Unable to record event ${event}. The trackable event ${id} does not exists`);
-        }
-
-        const previousEvent = JSON.parse(data.toString());
-        if (!acceptedStates.includes(previousEvent.name)) {
-            throw new Error(`Unable to record event ${event}. The trackable event ${id} has invalid status ${previousEvent.name}`);
-        }
-    }
-
-    @Transaction(false)
-    @Returns('boolean')
-    public async entityExists(ctx: Context, id: string): Promise<boolean> {
-        const data: Uint8Array = await ctx.stub.getState(id);
-        return this.exists(data);
-    }
 
     @Transaction()
     public async createShipmentUnit(
@@ -83,8 +20,8 @@ export class ShipmentContract extends Contract {
         transportMode: string,
         entityType: string,
     ): Promise<void> {
-        const exists: boolean = await this.entityExists(ctx, id);
-        if (exists) {
+        const data = await ctx.stub.getState(id);
+        if (exists(data)) {
             throw new Error(`The shipment ${id} already exists`);
         }
 
@@ -109,10 +46,12 @@ export class ShipmentContract extends Contract {
         contentType: string,
         contents: string
     ): Promise<void> {
-        const exists: boolean = await this.entityExists(ctx, id);
-        if (exists) {
+        const data = await ctx.stub.getState(id);
+        if (exists(data)) {
             throw new Error(`The trackable entity ${id} already exists`);
         }
+
+        await this.verifyRegisteredContent(ctx, contents);
 
         const trackableEntity = new TrackableEntity({
             ID: id,
@@ -126,79 +65,13 @@ export class ShipmentContract extends Contract {
         ctx.stub.setEvent(EVENT.TRACKABLE_ENTITY, buffer);
     }
 
-    @Transaction()
-    public async registerPickup(
-        ctx: Context,
-        id: string,
-        trackableEntityID: string,
-        performedTime: string,
-        participants: string
-    ) {
-        const exists = await this.entityExists(ctx, id);
-        if (exists) {
-            throw new Error(`Unable to initiate flow. The trackable event ${id} already exists`);
-        }
-        await this.createTrackableEvent(ctx, id, SHIPMENT_STATUS.PICKUP, trackableEntityID, performedTime, participants);
-    }
-
-    @Transaction()
-    public async registerInboundTransit(
-        ctx: Context,
-        id: string,
-        trackableEntityID: string,
-        performedTime: string,
-        participants: string
-    ) {
-        const validStates = [SHIPMENT_STATUS.IN_TRANSIT, SHIPMENT_STATUS.PICKUP];
-        await this.verifyPreviousEventState(ctx, id, SHIPMENT_STATUS.IN_TRANSIT, validStates);
-        await this.createTrackableEvent(ctx, id, SHIPMENT_STATUS.IN_TRANSIT, trackableEntityID, performedTime, participants);
-    }
-
-    @Transaction()
-    public async registerArrivalToProcessingCenter(
-        ctx: Context,
-        id: string,
-        trackableEntityID: string,
-        performedTime: string,
-        participants: string
-    ) {
-        const validStates = [SHIPMENT_STATUS.IN_TRANSIT, SHIPMENT_STATUS.AT_LOGISTICS_CENTER];
-        await this.verifyPreviousEventState(ctx, id, SHIPMENT_STATUS.AT_LOGISTICS_CENTER, validStates);
-        await this.createTrackableEvent(ctx, id, SHIPMENT_STATUS.AT_LOGISTICS_CENTER, trackableEntityID, performedTime, participants);
-    }
-
-    @Transaction()
-    public async registerOutboundTransit(
-        ctx: Context,
-        id: string,
-        trackableEntityID: string,
-        performedTime: string,
-        participants: string
-    ) {
-        const validStates = [SHIPMENT_STATUS.AT_LOGISTICS_CENTER, SHIPMENT_STATUS.OUT_FOR_DELIVERY];
-        await this.verifyPreviousEventState(ctx, id, SHIPMENT_STATUS.OUT_FOR_DELIVERY, validStates);
-        await this.createTrackableEvent(ctx, id, SHIPMENT_STATUS.OUT_FOR_DELIVERY, trackableEntityID, performedTime, participants);
-    }
-
-    @Transaction()
-    public async registerDelivery(
-        ctx: Context,
-        id: string,
-        trackableEntityID: string,
-        performedTime: string,
-        participants: string
-    ) {
-        await this.verifyPreviousEventState(ctx, id, SHIPMENT_STATUS.DELIVERED, [SHIPMENT_STATUS.OUT_FOR_DELIVERY]);
-        await this.createTrackableEvent(ctx, id, SHIPMENT_STATUS.DELIVERED, trackableEntityID, performedTime, participants);
-    }
-
     @Transaction(false)
     @Returns('any')
-    public async readTransaction(ctx: Context, id: string): Promise<any> {
-        const data: Uint8Array = await ctx.stub.getState(id);
+    public async getTransaction(ctx: Context, id: string): Promise<any> {
+        const data = await ctx.stub.getState(id);
 
-        if (!this.exists(data)) {
-            throw new Error(`The shipment ${id} does not exist`);
+        if (!exists(data)) {
+            throw new Error(`Transaction ${id} does not exist`);
         }
 
         return JSON.parse(data.toString());
@@ -206,14 +79,42 @@ export class ShipmentContract extends Contract {
 
     @Transaction(false)
     @Returns('any')
-    public async getTrackableEventHistory(ctx: Context, id: string): Promise<any> {
-        return this.iterateOverResults(ctx.stub.getHistoryForKey(id));
+    public async getEventRecords(ctx: Context, id: string): Promise<any> {
+        return iterateOverResults(ctx.stub.getHistoryForKey(id));
     }
 
     @Transaction(false)
     @Returns('any')
     public async getAllEntityEvents(ctx: Context, id: string): Promise<any> {
         const query = { selector: { trackableEntityID: id } };
-        return this.iterateOverResults(ctx.stub.getQueryResult(JSON.stringify(query)));
+        return iterateOverResults(ctx.stub.getQueryResult(JSON.stringify(query)));
+    }
+
+    private isValidShipment = (s: ShippingUnit) => s.ID && s.contentType && s.entityType && s.packagingType && s.transportMode;
+
+    private async verifyRegisteredContent(ctx: Context, contents: string) {
+        const unregisteredError = new Error(`Entity contains unregistered content units ${contents}`);
+
+        const items = JSON.parse(contents) as string[];
+        if (!Array.isArray(items) || items.length < 0) {
+            throw new Error('Contents can not be empty');
+        }
+
+        try {
+            const shipments = await Promise.all(items.map((id) => ctx.stub.getState(id)));
+            if (!shipments.every(exists)) {
+                throw unregisteredError;
+            }
+
+            const isValid = shipments
+                .map((s) => new ShippingUnit(JSON.parse(s.toString())))
+                .every(this.isValidShipment);
+
+            if (!isValid) {
+                throw unregisteredError;
+            }
+        } catch (e) {
+            throw new Error(`Entity contains unregistered content units ${contents}. ${e}`);
+        }
     }
 }

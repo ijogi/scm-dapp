@@ -1,6 +1,6 @@
 {
   "name": "tracking-contract",
-  "version": "0.0.24",
+  "version": "0.0.37",
   "description": "Shipment tracking smart contract",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",

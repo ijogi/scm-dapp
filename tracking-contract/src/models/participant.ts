@@ -13,4 +13,9 @@ export class Participant {
     @Property()
     public role: string;
 
+    constructor(args: Partial<Participant> = {}) {
+        this.ID = args.ID;
+        this.role = args.role;
+    }
+
 }

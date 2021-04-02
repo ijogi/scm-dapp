@@ -40,18 +40,6 @@ describe('ShipmentContract', () => {
         ctx.stub.getStateByRange.withArgs('', '').resolves();
     });
 
-    describe('#shipmentExists', () => {
-
-        it('should return true for a shipment', async () => {
-            await contract.entityExists(ctx, '1001').should.eventually.be.true;
-        });
-
-        it('should return false for a shipment that does not exist', async () => {
-            await contract.entityExists(ctx, '1003').should.eventually.be.false;
-        });
-
-    });
-
     describe('#createShipment', () => {
 
         it('should create a shipment', async () => {
@@ -78,27 +66,10 @@ describe('ShipmentContract', () => {
 
     });
 
-    describe('#createTrackableEvent', () => {
-
-        it('should create a trackable event', async () => {
-            await contract.createTrackableEvent(ctx, 'EV1001', 'test event', 'TE1003', '2021-03-14');
-            ctx.stub.putState.should.have.been.calledOnceWithExactly('EV1001', Buffer.from('{"ID":"EV1001","name":"test event","trackableEntityID":"TE1003","performedTime":"2021-03-14"}'));
-        });
-
-        it('should throw an error for a trackable event with unexisting trackable entity', async () => {
-            await contract.createTrackableEvent(ctx, 'EV1002', 'test event', 'TE1006', '2021-03-14').should.be.rejectedWith(/The trackable entity TE1006 does not exist/);
-        });
-
-        it('should throw an error for a trackable event that already exists', async () => {
-            await contract.createTrackableEvent(ctx, 'EV1003', 'test event', 'TE1003', '2021-03-14').should.be.rejectedWith(/The trackable event EV1003 already exists/);
-        });
-
-    });
-
-    describe('#readTransaction', () => {
+    describe('#getTransaction', () => {
 
         it('should return a shipment', async () => {
-            await contract.readTransaction(ctx, '1001').should.eventually.deep.equal({
+            await contract.getTransaction(ctx, '1001').should.eventually.deep.equal({
                 ID:'1001',
                 contentType:'content type',
                 packagingType:'packaging type',
@@ -108,15 +79,7 @@ describe('ShipmentContract', () => {
         });
 
         it('should throw an error for a shipment that does not exist', async () => {
-            await contract.readTransaction(ctx, '1003').should.be.rejectedWith(/The shipment 1003 does not exist/);
-        });
-
-    });
-
-    describe('#readTransaction', () => {
-
-        it('should return all transactions', async () => {
-            await contract.getRange(ctx).should.eventually.deep.equal([]);
+            await contract.getTransaction(ctx, '1003').should.be.rejectedWith(/The shipment 1003 does not exist/);
         });
 
     });

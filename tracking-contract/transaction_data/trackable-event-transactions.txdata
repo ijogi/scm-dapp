@@ -1,0 +1,73 @@
+[
+    {
+        "transactionName": "registerPickup",
+        "transactionLabel": "A test registerPickup transaction",
+        "arguments": [
+            "EV01",
+            "TE01",
+            "2021-03-14",
+            "[{\"ID\":\"01\",\"role\":\"producer\"},{\"ID\":\"02\",\"role\":\"courier\"}]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerInboundTransit",
+        "transactionLabel": "A test registerInboundTransit transaction",
+        "arguments": [
+            "EV01",
+            "TE001",
+            "2021-03-14",
+            "[{\"ID\":\"02\",\"role\":\"courier\"}]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerArrivalToProcessingCenter",
+        "transactionLabel": "A test registerArrivalToProcessingCenter transaction",
+        "arguments": [
+            "EV01",
+            "TE001",
+            "2021-03-14",
+            "[{\"ID\":\"02\",\"role\":\"courier\"}, {\"ID\":\"03\",\"role\":\"manager\"}]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerOutboundTransit",
+        "transactionLabel": "A test registerOutboundTransit transaction",
+        "arguments": [
+            "EV01",
+            "TE001",
+            "2021-03-14",
+            "[{\"ID\":\"03\",\"role\":\"manager\"}, {\"ID\":\"04\",\"role\":\"courier\"}]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "registerDelivery",
+        "transactionLabel": "A test registerDelivery transaction",
+        "arguments": [
+            "EV01",
+            "TE001",
+            "2021-03-14",
+            "[{\"ID\":\"04\",\"role\":\"courier\"}, {\"ID\":\"05\",\"role\":\"retailer\"}]"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "getTransaction",
+        "transactionLabel": "A test getTransaction transaction",
+        "arguments": [
+            "EV01"
+        ],
+        "transientData": {}
+    },
+    {
+        "transactionName": "getEventRecords",
+        "transactionLabel": "A test getEventRecords transaction",
+        "arguments": [
+            "EV01"
+        ],
+        "transientData": {}
+    }
+]
