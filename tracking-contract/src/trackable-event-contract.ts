@@ -11,66 +11,6 @@ import { exists, iterateOverResults } from './utils/utility-functions';
 @Info({title: 'TrackableEventContract', description: 'My Smart Contract' })
 export class TrackableEventContract extends Contract {
 
-    private async createTrackableEvent(
-        ctx: Context,
-        id: string,
-        name: string,
-        trackableEntityID: string,
-        performedTime: string,
-        participants: string,
-    ): Promise<Buffer> {
-        const data = await ctx.stub.getState(trackableEntityID);
-        if (!exists(data)) {
-            throw new Error(`The trackable entity ${trackableEntityID} does not exist`);
-        }
-
-        this.verifyParticipantData(participants);
-
-        const trackableEvent = new TrackableEvent({
-            ID: id,
-            name,
-            trackableEntityID,
-            performedTime,
-            participants,
-        });
-
-        const buffer: Buffer = Buffer.from(JSON.stringify(trackableEvent));
-        await ctx.stub.putState(id, buffer);
-
-        return buffer;
-    }
-
-    private verifyParticipantData(participants: string): void {
-        try {
-            const parsedParticipants = JSON.parse(participants) as Participant[];
-            if (!Array.isArray(parsedParticipants) || parsedParticipants.length < 0) {
-                throw new Error('Event must include participant(s)');
-            }
-
-            const isValid = parsedParticipants
-                .map((p) => new Participant(p))
-                .every((p) => p.ID && p.role);
-
-            if (!isValid) {
-                throw new Error('Participant data has invalid format');
-            }
-        } catch (e) {
-            throw new Error(`Error parsing participants data ${e}`);
-        }
-    }
-
-    private async verifyPreviousEventState(ctx: Context, id: string, event: string, acceptedStates: string[]) {
-        const data = await ctx.stub.getState(id);
-        if (!exists(data)) {
-            throw new Error(`Unable to record event ${event}. The trackable event ${id} does not exists`);
-        }
-
-        const previousEvent = JSON.parse(data.toString());
-        if (!acceptedStates.includes(previousEvent.name)) {
-            throw new Error(`Unable to record event ${event}. The trackable event ${id} has invalid status ${previousEvent.name}`);
-        }
-    }
-
     @Transaction()
     public async registerPickup(
         ctx: Context,
@@ -179,5 +119,71 @@ export class TrackableEventContract extends Contract {
     @Returns('any')
     public async getEventRecords(ctx: Context, id: string): Promise<any> {
         return iterateOverResults(ctx.stub.getHistoryForKey(id));
+    }
+
+    private isValidTrackableEvent = (e: TrackableEvent) => !!e.ID && !!e.name && !!e.performedTime && !!e.trackableEntityID;
+
+    private async createTrackableEvent(
+        ctx: Context,
+        id: string,
+        name: string,
+        trackableEntityID: string,
+        performedTime: string,
+        participants: string,
+    ): Promise<Buffer> {
+        const data = await ctx.stub.getState(trackableEntityID);
+        if (!exists(data)) {
+            throw new Error(`The trackable entity ${trackableEntityID} does not exist`);
+        }
+
+        this.verifyParticipantData(participants);
+
+        const trackableEvent = new TrackableEvent({
+            ID: id,
+            name,
+            trackableEntityID,
+            performedTime,
+            participants,
+        });
+
+        if (!this.isValidTrackableEvent(trackableEvent)) {
+            throw new Error(`Trackable event is missing mandatory fields. ${trackableEvent}`);
+        }
+
+        const buffer: Buffer = Buffer.from(JSON.stringify(trackableEvent));
+        await ctx.stub.putState(id, buffer);
+
+        return buffer;
+    }
+
+    private verifyParticipantData(participants: string): void {
+        try {
+            const parsedParticipants = JSON.parse(participants) as Participant[];
+            if (!Array.isArray(parsedParticipants) || parsedParticipants.length < 0) {
+                throw new Error('Event must include participant(s)');
+            }
+
+            const isValid = parsedParticipants
+                .map((p) => new Participant(p))
+                .every((p) => !!p.ID && !!p.role);
+
+            if (!isValid) {
+                throw new Error('Participant data has invalid format');
+            }
+        } catch (e) {
+            throw new Error(`Error parsing participants data ${e}`);
+        }
+    }
+
+    private async verifyPreviousEventState(ctx: Context, id: string, event: string, acceptedStates: string[]) {
+        const data = await ctx.stub.getState(id);
+        if (!exists(data)) {
+            throw new Error(`Unable to record event ${event}. The trackable event ${id} does not exists`);
+        }
+
+        const previousEvent = JSON.parse(data.toString());
+        if (!acceptedStates.includes(previousEvent.name)) {
+            throw new Error(`Unable to record event ${event}. The trackable event ${id} has invalid status ${previousEvent.name}`);
+        }
     }
 }

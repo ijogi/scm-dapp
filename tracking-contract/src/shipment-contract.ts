@@ -22,7 +22,7 @@ export class ShipmentContract extends Contract {
     ): Promise<void> {
         const data = await ctx.stub.getState(id);
         if (exists(data)) {
-            throw new Error(`The shipment ${id} already exists`);
+            throw new Error(`Shipment ${id} already exists`);
         }
 
         const shipment = new ShippingUnit({
@@ -32,6 +32,10 @@ export class ShipmentContract extends Contract {
             transportMode,
             entityType,
         });
+
+        if (!this.isValidShipment(shipment)) {
+            throw new Error(`Shipment is missing mandatory fields. ${shipment}`);
+        }
 
         const buffer: Buffer = Buffer.from(JSON.stringify(shipment));
         await ctx.stub.putState(id, buffer);
@@ -48,7 +52,7 @@ export class ShipmentContract extends Contract {
     ): Promise<void> {
         const data = await ctx.stub.getState(id);
         if (exists(data)) {
-            throw new Error(`The trackable entity ${id} already exists`);
+            throw new Error(`Trackable entity ${id} already exists`);
         }
 
         await this.verifyRegisteredContent(ctx, contents);
@@ -59,6 +63,10 @@ export class ShipmentContract extends Contract {
             contentType,
             contents,
         });
+
+        if (!this.isValidTrackableEntity(trackableEntity)) {
+            throw new Error(`Trackable entity is missing mandatory fields. ${trackableEntity}`);
+        }
 
         const buffer: Buffer = Buffer.from(JSON.stringify(trackableEntity));
         await ctx.stub.putState(id, buffer);
@@ -90,7 +98,8 @@ export class ShipmentContract extends Contract {
         return iterateOverResults(ctx.stub.getQueryResult(JSON.stringify(query)));
     }
 
-    private isValidShipment = (s: ShippingUnit) => s.ID && s.contentType && s.entityType && s.packagingType && s.transportMode;
+    private isValidShipment = (s: ShippingUnit) => !!s.ID && !!s.contentType && !!s.entityType && !!s.packagingType && !!s.transportMode;
+    private isValidTrackableEntity = (te: TrackableEntity) => !!te.ID && !!te.contentType && !!te.contents && !!te.name;
 
     private async verifyRegisteredContent(ctx: Context, contents: string) {
         const unregisteredError = new Error(`Entity contains unregistered content units ${contents}`);
@@ -100,21 +109,17 @@ export class ShipmentContract extends Contract {
             throw new Error('Contents can not be empty');
         }
 
-        try {
-            const shipments = await Promise.all(items.map((id) => ctx.stub.getState(id)));
-            if (!shipments.every(exists)) {
-                throw unregisteredError;
-            }
+        const shipments = await Promise.all(items.map((id) => ctx.stub.getState(id)));
+        if (!shipments.every(exists)) {
+            throw unregisteredError;
+        }
 
-            const isValid = shipments
-                .map((s) => new ShippingUnit(JSON.parse(s.toString())))
-                .every(this.isValidShipment);
+        const isValid = shipments
+            .map((s) => new ShippingUnit(JSON.parse(s.toString())))
+            .every(this.isValidShipment);
 
-            if (!isValid) {
-                throw unregisteredError;
-            }
-        } catch (e) {
-            throw new Error(`Entity contains unregistered content units ${contents}. ${e}`);
+        if (!isValid) {
+            throw unregisteredError;
         }
     }
 }
