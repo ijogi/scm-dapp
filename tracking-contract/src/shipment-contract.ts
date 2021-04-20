@@ -6,7 +6,7 @@ import { Context, Contract, Info, Returns, Transaction } from 'fabric-contract-a
 import { EVENT } from './models/events';
 import { ShippingUnit } from './models/shipment';
 import { TrackableEntity } from './models/trackable-entity';
-import { exists, iterateOverResults } from './utils/utility-functions';
+import { checkAuthorization, exists, iterateOverResults } from './utils/utility-functions';
 
 @Info({title: 'ShipmentContract', description: 'Shipment tracking smart contract' })
 export class ShipmentContract extends Contract {
@@ -20,6 +20,7 @@ export class ShipmentContract extends Contract {
         transportMode: string,
         entityType: string,
     ): Promise<void> {
+        checkAuthorization(ctx, 'Org1MSP');
         const data = await ctx.stub.getState(id);
         if (exists(data)) {
             throw new Error(`Shipment ${id} already exists`);
@@ -50,6 +51,7 @@ export class ShipmentContract extends Contract {
         contentType: string,
         contents: string
     ): Promise<void> {
+        checkAuthorization(ctx, 'Org1MSP');
         const data = await ctx.stub.getState(id);
         if (exists(data)) {
             throw new Error(`Trackable entity ${id} already exists`);
@@ -89,6 +91,12 @@ export class ShipmentContract extends Contract {
     @Returns('any')
     public async getEventRecords(ctx: Context, id: string): Promise<any> {
         return iterateOverResults(ctx.stub.getHistoryForKey(id));
+    }
+
+    @Transaction(false)
+    @Returns('any')
+    public async getIdentity(ctx: Context): Promise<any> {
+        return ctx.clientIdentity.getMSPID();
     }
 
     @Transaction(false)

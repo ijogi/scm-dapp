@@ -6,7 +6,7 @@ import { Context, Contract, Info, Returns, Transaction } from 'fabric-contract-a
 import { Participant } from './models/participant';
 import { SHIPMENT_STATUS } from './models/shipment-status';
 import { TrackableEvent } from './models/trackable-event';
-import { exists, iterateOverResults } from './utils/utility-functions';
+import { checkAuthorization, exists, iterateOverResults } from './utils/utility-functions';
 
 @Info({title: 'TrackableEventContract', description: 'My Smart Contract' })
 export class TrackableEventContract extends Contract {
@@ -131,6 +131,7 @@ export class TrackableEventContract extends Contract {
         performedTime: string,
         participants: string,
     ): Promise<Buffer> {
+        checkAuthorization(ctx, 'Org2MSP');
         const data = await ctx.stub.getState(trackableEntityID);
         if (!exists(data)) {
             throw new Error(`The trackable entity ${trackableEntityID} does not exist`);

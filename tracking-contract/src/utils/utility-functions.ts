@@ -1,3 +1,4 @@
+import { Context } from 'fabric-contract-api';
 import { Iterators } from 'fabric-shim';
 
 type Iterator = (Promise<Iterators.StateQueryIterator> & AsyncIterable<Iterators.KV>) | (Promise<Iterators.HistoryQueryIterator> & AsyncIterable<Iterators.KeyModification>);
@@ -16,3 +17,9 @@ export async function iterateOverResults(iterator: Iterator) {
 }
 
 export const exists = (data: Uint8Array) => (!!data && data.length > 0);
+
+export function checkAuthorization(ctx: Context, allowedMSP: string) {
+    if (ctx.clientIdentity.getMSPID() !== allowedMSP) {
+        throw new Error('Organization not authorized to access this resource');
+    }
+}
