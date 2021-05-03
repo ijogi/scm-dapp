@@ -1,12 +1,10 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { FabricModule } from './fabric/fabric.module';
-import { TrackableEventModule } from './trackable-event/trackable-event.module';
+import { TrackModule } from './track/track.module';
 
 @Module({
-  imports: [FabricModule, TrackableEventModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [FabricModule, TrackModule],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

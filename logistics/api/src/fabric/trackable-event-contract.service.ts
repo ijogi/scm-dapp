@@ -4,7 +4,7 @@ import { Contract, ContractEvent } from 'fabric-network';
 import { FabricService } from 'src/fabric/fabric.service';
 
 @Injectable()
-export class ShipmentContractService {
+export class TrackableEventService {
   private contract: Contract;
 
   constructor(private fabricSvc: FabricService) {
