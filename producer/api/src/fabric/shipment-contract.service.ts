@@ -13,7 +13,7 @@ export class ShipmentContractService {
 
   private async initContract() {
     this.contract = await this.fabricSvc.getContract(
-      'tc-37',
+      'tc-39',
       'ShipmentContract',
     );
 
@@ -55,6 +55,15 @@ export class ShipmentContractService {
   async getTransaction(id: string) {
     const result = await this.contract.evaluateTransaction(
       'getTransaction',
+      id,
+    );
+
+    return JSON.parse(result.toString());
+  }
+
+  async getTransactionHistory(id: string) {
+    const result = await this.contract.evaluateTransaction(
+      'getEventRecords',
       id,
     );
 

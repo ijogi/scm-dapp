@@ -15,4 +15,9 @@ export class ShipUnitController {
   getTransaction(@Param('id') id: string) {
     return this.shipmentContract.getTransaction(id);
   }
+
+  @Get('/:id/history')
+  getTransactionHistory(@Param('id') id: string) {
+    return this.shipmentContract.getTransactionHistory(id);
+  }
 }
