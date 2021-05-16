@@ -13,7 +13,7 @@ export class ShipmentContractService {
 
   private async initContract() {
     this.contract = await this.fabricSvc.getContract(
-      'tc-39',
+      'tracking-contract',
       'ShipmentContract',
     );
 
